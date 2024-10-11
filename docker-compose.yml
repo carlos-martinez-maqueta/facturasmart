@@ -1,0 +1,63 @@
+version: '3'
+
+services:
+    nginx1:
+        image: rash07/nginx
+        working_dir: /var/www/html
+        environment:
+            VIRTUAL_HOST: ncsistem.com, *.ncsistem.com
+        volumes:
+            - ./:/var/www/html
+            - /root/proxy/fpms/facturadorsmart1:/etc/nginx/sites-available
+        restart: always
+    fpm1:
+        image: rash07/php-fpm:7.4
+        working_dir: /var/www/html
+        volumes:
+            - ./ssh:/root/.ssh
+            - ./ssh:/var/www/.ssh
+            - ./:/var/www/html
+        restart: always
+    mariadb1:
+        image: mariadb:10.5.6
+        environment:
+            - MYSQL_USER=${MYSQL_USER}
+            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+            - MYSQL_DATABASE=${MYSQL_DATABASE}
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            - MYSQL_PORT_HOST=${MYSQL_PORT_HOST}
+        volumes:
+            - mysqldata1:/var/lib/mysql
+        ports:
+            - "${MYSQL_PORT_HOST}:3306"
+        restart: always
+    redis1:
+        image: redis:alpine
+        volumes:
+            - redisdata1:/data
+        restart: always
+    scheduling1:
+        image: rash07/scheduling
+        working_dir: /var/www/html
+        volumes:
+            - ./:/var/www/html
+        restart: always
+    supervisor1:
+        image: rash07/php7.4-supervisor
+        working_dir: /var/www/html
+        volumes:
+            - ./:/var/www/html
+            - ./supervisor.conf:/etc/supervisor/conf.d/supervisor.conf
+        restart: always
+
+networks:
+    default:
+        external:
+            name: proxynet
+
+volumes:
+    redisdata1:
+        driver: "local"
+    mysqldata1:
+        driver: "local"
+
